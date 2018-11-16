@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Kilometer</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps">Kilometer</string>
+    <string name="done">Done</string>
+    <string name="pick_up">Pick Up</string>
+    <string name="drop_off">Drop Off</string>
 </resources>

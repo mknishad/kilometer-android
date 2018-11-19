@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true" />
 
     <android.support.v7.widget.AppCompatEditText
         android:id="@+id/pickUpEditText"
@@ -49,7 +50,6 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
-        android:onClick="doneOnClick"
         android:text="@string/done" />
 
 </RelativeLayout>

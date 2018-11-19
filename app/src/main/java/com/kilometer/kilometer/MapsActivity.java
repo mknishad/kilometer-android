@@ -1,38 +1,44 @@
 package com.kilometer.kilometer;
 
-import android.app.Dialog;
-import android.databinding.DataBindingUtil;
 import android.os.Build;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Toast;
+import android.widget.EditText;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.kilometer.kilometer.databinding.ActivityMapsBinding;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private static final String TAG = "MapsActivity";
 
-    private ActivityMapsBinding binding;
-
     private GoogleMap mMap;
+
+    @BindView(R.id.pickUpEditText)
+    EditText pickUpEditText;
+    @BindView(R.id.dropOffEditText)
+    EditText dropOffEditText;
+    @OnClick(R.id.doneButton)
+    public void done() {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_maps);
+        setContentView(R.layout.activity_maps);
+        ButterKnife.bind(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()

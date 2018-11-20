@@ -133,6 +133,7 @@
             android:paddingEnd="16dp"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
+            android:visibility="gone"
             android:background="@android:color/white"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -172,6 +173,8 @@
         </LinearLayout>
 
         <View
+            android:visibility="gone"
+            android:id="@+id/separatorView"
             android:background="@android:color/darker_gray"
             android:layout_width="match_parent"
             android:layout_height="1dp"/>
@@ -181,6 +184,7 @@
             android:orientation="horizontal"
             android:background="@android:color/white"
             android:padding="8dp"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 

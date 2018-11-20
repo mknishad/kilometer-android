@@ -10,9 +10,14 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -36,19 +41,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final float DEFAULT_ZOOM = 15f;
 
+    @BindView(R.id.pickUpEditText)
+    EditText pickUpEditText;
+    @BindView(R.id.clearPickUpImageView)
+    ImageView clearPickUpImageView;
+    @BindView(R.id.dropOffEditText)
+    EditText dropOffEditText;
+    @BindView(R.id.clearDropOffImageView)
+    ImageView clearDropOffImageView;
+    @BindView(R.id.dropOffLayout)
+    LinearLayout dropOffLayout;
+    @BindView(R.id.doneButton)
+    Button doneButton;
+    @BindView(R.id.distanceTextView)
+    TextView distanceTextView;
+    @BindView(R.id.timeTextView)
+    TextView timeTextView;
+    @BindView(R.id.fareTextView)
+    TextView fareTextView;
+    @BindView(R.id.infoLayout)
+    LinearLayout infoLayout;
+    @BindView(R.id.separatorView)
+    View separatorView;
+    @BindView(R.id.motorCycleImageView)
+    ImageView motorCycleImageView;
+    @BindView(R.id.carImageView)
+    ImageView carImageView;
+    @BindView(R.id.microImageView)
+    ImageView microImageView;
+    @BindView(R.id.vehicleLayout)
+    LinearLayout vehicleLayout;
+    @BindView(R.id.bottomLayout)
+    LinearLayout bottomLayout;
+
     private GoogleMap mMap;
     private boolean mLocationPermissionGranted;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-
-    @BindView(R.id.pickUpEditText)
-    EditText pickUpEditText;
-    @BindView(R.id.dropOffEditText)
-    EditText dropOffEditText;
-
-    @OnClick(R.id.doneButton)
-    public void doneOnClick() {
-
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,5 +200,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     initMap();
                 }
         }
+    }
+
+    @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton, R.id.motorCycleImageView, R.id.carImageView, R.id.microImageView})
+    public void onViewClicked(View view) {
+        switch (view.getId()) {
+            case R.id.clearPickUpImageView:
+                break;
+            case R.id.clearDropOffImageView:
+                break;
+            case R.id.doneButton:
+                done();
+                break;
+            case R.id.motorCycleImageView:
+                break;
+            case R.id.carImageView:
+                break;
+            case R.id.microImageView:
+                break;
+        }
+    }
+
+    private void done() {
+        Log.d(TAG, "done: ");
+        doneButton.setText("Start");
+        infoLayout.setVisibility(View.VISIBLE);
+        separatorView.setVisibility(View.VISIBLE);
+        vehicleLayout.setVisibility(View.VISIBLE);
     }
 }

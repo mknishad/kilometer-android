@@ -13,44 +13,198 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true" />
+        android:layout_marginStart="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="0dp" />
 
-    <android.support.v7.widget.AppCompatEditText
-        android:id="@+id/pickUpEditText"
-        style="@style/Widget.AppCompat.EditText"
+    <LinearLayout
+        android:id="@+id/pickUpLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="24dp"
-        android:layout_marginLeft="24dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:layout_marginTop="48dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginRight="24dp"
-        android:hint="@string/pick_up"
-        android:inputType="text" />
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/background_white_round"
+        android:elevation="4dp"
+        android:orientation="horizontal"
+        android:padding="8dp">
 
-    <android.support.v7.widget.AppCompatEditText
-        android:id="@+id/dropOffEditText"
-        style="@style/Widget.AppCompat.EditText"
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/pick_up"
+            android:src="@drawable/ic_rectangle_black_solid" />
+
+        <EditText
+            android:id="@+id/pickUpEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_weight="1"
+            android:background="@android:color/white"
+            android:hint="@string/pick_up"
+            android:imeOptions="actionSearch"
+            android:inputType="text" />
+
+        <ImageView
+            android:id="@+id/clearPickUpImageView"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:contentDescription="@string/clear"
+            android:src="@drawable/ic_clear_black" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dropOffLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/pickUpEditText"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="24dp"
-        android:hint="@string/drop_off"
-        android:inputType="text" />
+        android:layout_below="@id/pickUpLayout"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/background_white_round"
+        android:elevation="4dp"
+        android:orientation="horizontal"
+        android:padding="8dp">
 
-    <Button
-        android:id="@+id/doneButton"
-        android:layout_width="wrap_content"
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/drop_off"
+            android:src="@drawable/ic_circle_black_solid" />
+
+        <EditText
+            android:id="@+id/dropOffEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_weight="1"
+            android:background="@android:color/white"
+            android:hint="@string/drop_off"
+            android:imeOptions="actionSearch"
+            android:inputType="text" />
+
+        <ImageView
+            android:id="@+id/clearDropOffImageView"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:contentDescription="@string/clear"
+            android:src="@drawable/ic_clear_black" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bottomLayout"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="24dp"
-        android:text="@string/done" />
+        android:layout_alignParentBottom="true">
+
+        <Button
+            android:id="@+id/doneButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/background_button"
+            android:gravity="bottom|center_horizontal"
+            android:paddingBottom="16dp"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/done"
+            android:textAllCaps="false"
+            android:textSize="24sp" />
+
+        <LinearLayout
+            android:id="@+id/infoLayout"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:background="@android:color/white"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/distanceTextView"
+                    android:text="Distance: 12 km"
+                    android:textSize="16sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/timeTextView"
+                    android:text="Time: 30 min"
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/fareTextView"
+                android:text="Fare: $4.43"
+                android:textSize="20sp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <View
+            android:background="@android:color/darker_gray"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
+
+        <LinearLayout
+            android:id="@+id/vehicleLayout"
+            android:orientation="horizontal"
+            android:background="@android:color/white"
+            android:padding="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/motorCycleImageView"
+                android:src="@drawable/ic_bike_black"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+
+            <ImageView
+                android:id="@+id/carImageView"
+                android:src="@drawable/ic_car_black"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+
+            <ImageView
+                android:id="@+id/microImageView"
+                android:src="@drawable/ic_micro_black"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </LinearLayout>
 
 </RelativeLayout>

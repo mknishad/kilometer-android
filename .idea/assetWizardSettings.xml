@@ -66,7 +66,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/C:/Program%20Files/Android/Android%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/maps/ic_directions_bus_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/C:/Program%20Files/Android/Android%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/maps/ic_my_location_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -76,11 +76,11 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="height" value="48" />
-                            <entry key="outputName" value="ic_micro_black" />
+                            <entry key="height" value="36" />
+                            <entry key="outputName" value="ic_my_location" />
                             <entry key="overrideSize" value="true" />
                             <entry key="sourceFile" value="C:\Users\Nishad\Downloads\kilometer_logo.svg" />
-                            <entry key="width" value="48" />
+                            <entry key="width" value="36" />
                           </map>
                         </option>
                       </PersistentState>

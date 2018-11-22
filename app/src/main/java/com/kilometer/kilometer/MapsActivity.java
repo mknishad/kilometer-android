@@ -19,6 +19,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -52,7 +53,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-    private static final float DEFAULT_ZOOM = 15.0f;
+    private static final float DEFAULT_ZOOM = 14.0f;
     private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(
             new LatLng(-40, -168), new LatLng(71, 136));
 
@@ -66,6 +67,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ImageView clearDropOffImageView;
     @BindView(R.id.dropOffLayout)
     LinearLayout dropOffLayout;
+    @BindView(R.id.myLocationImageButton)
+    ImageButton myLocationImageButton;
     @BindView(R.id.doneButton)
     Button doneButton;
     @BindView(R.id.distanceTextView)
@@ -277,7 +280,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton, R.id.motorCycleImageView, R.id.carImageView, R.id.microImageView})
+    @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton, R.id.motorCycleImageView, R.id.carImageView, R.id.microImageView, R.id.myLocationImageButton})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.clearPickUpImageView:
@@ -294,6 +297,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             case R.id.carImageView:
                 break;
             case R.id.microImageView:
+                break;
+            case R.id.myLocationImageButton:
+                getDeviceLocation();
                 break;
         }
     }

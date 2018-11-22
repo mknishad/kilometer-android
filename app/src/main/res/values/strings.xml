@@ -5,4 +5,5 @@
     <string name="pick_up">Pick Up</string>
     <string name="drop_off">Drop Off</string>
     <string name="clear">clear</string>
+    <string name="my_location">My Location</string>
 </resources>

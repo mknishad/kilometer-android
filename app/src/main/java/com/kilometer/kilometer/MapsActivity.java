@@ -2,6 +2,8 @@ package com.kilometer.kilometer;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,9 +12,11 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -29,6 +33,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -39,7 +47,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-    private static final float DEFAULT_ZOOM = 15f;
+    private static final float DEFAULT_ZOOM = 15.0f;
 
     @BindView(R.id.pickUpEditText)
     EditText pickUpEditText;
@@ -95,6 +103,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         getLocationPermission();
     }
 
+    private void initEditTexts() {
+        Log.d(TAG, "initEditTexts: ");
+
+        pickUpEditText.setOnEditorActionListener((textView, actionId, keyEvent) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH
+                    || actionId == EditorInfo.IME_ACTION_DONE
+                    || keyEvent.getAction() == KeyEvent.ACTION_DOWN
+                    || keyEvent.getAction() == keyEvent.KEYCODE_ENTER) {
+                // execute method for searching
+                //geoLocate();
+            }
+            return false;
+        });
+    }
+
+    private void geoLocate() {
+        Log.d(TAG, "geoLocate: geolocating...");
+
+        String searchString = pickUpEditText.getText().toString();
+        Geocoder geocoder = new Geocoder(MapsActivity.this);
+        List<Address> addressList = new ArrayList<>();
+
+        try {
+            addressList = geocoder.getFromLocationName(searchString, 1);
+        } catch (IOException e) {
+            Log.e(TAG, "geoLocate: IOException: " + e.getMessage(), e);
+        }
+
+        if (addressList.size() > 0) {
+            Address address = addressList.get(0);
+
+            Log.d(TAG, "geoLocate: found a location: " + address.toString());
+        }
+    }
+
     private void initMap() {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -124,6 +167,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+            initEditTexts();
         }
     }
 
@@ -206,8 +251,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.clearPickUpImageView:
+                clearPickUp();
                 break;
             case R.id.clearDropOffImageView:
+                clearDropOff();
                 break;
             case R.id.doneButton:
                 done();
@@ -219,6 +266,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             case R.id.microImageView:
                 break;
         }
+    }
+
+    private void clearPickUp() {
+        pickUpEditText.setText("");
+    }
+
+    private void clearDropOff() {
+        dropOffEditText.setText("");
     }
 
     private void done() {

@@ -40,7 +40,7 @@
             android:contentDescription="@string/pick_up"
             android:src="@drawable/ic_rectangle_black_solid" />
 
-        <EditText
+        <AutoCompleteTextView
             android:id="@+id/pickUpEditText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -84,7 +84,7 @@
             android:contentDescription="@string/drop_off"
             android:src="@drawable/ic_circle_black_solid" />
 
-        <EditText
+        <AutoCompleteTextView
             android:id="@+id/dropOffEditText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

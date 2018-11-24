@@ -1,4 +1,4 @@
-package com.kilometer.kilometer;
+package com.kilometer.kilometer.view;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -38,6 +38,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.tasks.Task;
+import com.kilometer.kilometer.R;
 
 import java.io.IOException;
 import java.util.ArrayList;

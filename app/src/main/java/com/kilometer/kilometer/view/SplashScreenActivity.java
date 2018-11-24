@@ -1,4 +1,4 @@
-package com.kilometer.kilometer;
+package com.kilometer.kilometer.view;
 
 import android.app.Dialog;
 import android.content.Intent;

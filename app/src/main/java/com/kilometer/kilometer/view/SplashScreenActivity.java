@@ -2,8 +2,9 @@ package com.kilometer.kilometer;
 
 import android.app.Dialog;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -25,6 +26,7 @@ public class SplashScreenActivity extends AppCompatActivity {
     }
 
     private void init() {
+        String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         startActivity(new Intent(getApplicationContext(), MapsActivity.class));
         finish();
     }

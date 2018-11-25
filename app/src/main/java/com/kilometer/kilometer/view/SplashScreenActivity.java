@@ -16,6 +16,7 @@ import com.kilometer.kilometer.networking.ApiInterface;
 import com.kilometer.kilometer.util.ApplicationManager;
 import com.kilometer.kilometer.util.Constants;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -33,9 +34,32 @@ public class SplashScreenActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (isPlayServicesOk()) {
-            init();
-        }
+        apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
+
+        checkServerStatus();
+    }
+
+    private void checkServerStatus() {
+        Call<ResponseBody> call = apiInterface.checkServerStatus();
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                Log.d(TAG, "onResponse: " + response.body());
+
+                if (isPlayServicesOk()) {
+                    init();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e(TAG, "onFailure: " + t.getMessage(), t);
+
+                if (isPlayServicesOk()) {
+                    init();
+                }
+            }
+        });
     }
 
     private boolean isPlayServicesOk() {
@@ -60,7 +84,6 @@ public class SplashScreenActivity extends AppCompatActivity {
         Log.d(TAG, "init: initializing...");
         androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         Log.d(TAG, "init: androidId: " + androidId);
-        apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
 
         if (ApplicationManager.hasInternetConnection(this)) {
             getTripState();

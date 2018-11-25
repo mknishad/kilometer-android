@@ -37,6 +37,12 @@ public class SplashScreenActivity extends AppCompatActivity {
         apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
 
         checkServerStatus();
+
+        if (isPlayServicesOk()) {
+            init();
+        } else {
+            finish();
+        }
     }
 
     private void checkServerStatus() {
@@ -45,19 +51,11 @@ public class SplashScreenActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 Log.d(TAG, "onResponse: " + response.body());
-
-                if (isPlayServicesOk()) {
-                    init();
-                }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e(TAG, "onFailure: " + t.getMessage(), t);
-
-                if (isPlayServicesOk()) {
-                    init();
-                }
             }
         });
     }
@@ -85,49 +83,49 @@ public class SplashScreenActivity extends AppCompatActivity {
         androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         Log.d(TAG, "init: androidId: " + androidId);
 
-        if (ApplicationManager.hasInternetConnection(this)) {
-            getTripState();
-        } else {
-            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "init: no internet connection!");
-        }
+        getTripState();
     }
 
     private void getTripState() {
-        Call<StateResponse> stateResponseCall = apiInterface.getState(androidId);
-        stateResponseCall.enqueue(new Callback<StateResponse>() {
-            @Override
-            public void onResponse(Call<StateResponse> call, Response<StateResponse> response) {
-                stateResponse = response.body();
+        if (!ApplicationManager.hasInternetConnection(this)) {
+            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "getTripState: No internet connection!");
+            openMap();
+        } else {
+            Call<StateResponse> stateResponseCall = apiInterface.getState(androidId);
+            stateResponseCall.enqueue(new Callback<StateResponse>() {
+                @Override
+                public void onResponse(Call<StateResponse> call, Response<StateResponse> response) {
+                    stateResponse = response.body();
+                    Log.d(TAG, "onResponse:================================");
+                    Log.d(TAG, "onResponse: stateResponse: " + stateResponse);
+                    Log.d(TAG, "onResponse:================================");
 
-                if (stateResponse == null) {
-                    Log.e(TAG, "onResponse: stateResponse == null");
-                    Toast.makeText(SplashScreenActivity.this, "Internal server error!",
-                            Toast.LENGTH_SHORT).show();
-                    return;
+                    if (stateResponse == null) {
+                        Log.e(TAG, "onResponse: stateResponse == null");
+                        Toast.makeText(SplashScreenActivity.this, "Internal server error!",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    openMap();
                 }
 
-                Log.d(TAG, "onResponse:================================");
-                Log.d(TAG, "onResponse: stateResponse: " + stateResponse);
-                Log.d(TAG, "onResponse:================================");
-
-                openMap();
-            }
-
-            @Override
-            public void onFailure(Call<StateResponse> call, Throwable t) {
-                Log.e(TAG, "onFailure: " + t.getMessage(), t);
-                Toast.makeText(SplashScreenActivity.this, "Internal server error!",
-                        Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
+                @Override
+                public void onFailure(Call<StateResponse> call, Throwable t) {
+                    Log.e(TAG, "onFailure: " + t.getMessage(), t);
+                    Toast.makeText(SplashScreenActivity.this, "Internal server error!",
+                            Toast.LENGTH_SHORT).show();
+                    openMap();
+                }
+            });
+        }
     }
 
     private void openMap() {
         Log.d(TAG, "openMap: opening map activity...");
         Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
         intent.putExtra(Constants.STATE_RESPONSE, stateResponse);
+        intent.putExtra(Constants.DEVICE_ID, androidId);
         startActivity(intent);
         finish();
     }

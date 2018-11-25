@@ -2,6 +2,8 @@ package com.kilometer.kilometer.networking;
 
 import com.kilometer.kilometer.model.EstimationRequest;
 import com.kilometer.kilometer.model.EstimationResponse;
+import com.kilometer.kilometer.model.StartTripRequest;
+import com.kilometer.kilometer.model.StartTripResponse;
 import com.kilometer.kilometer.model.StateResponse;
 
 import okhttp3.ResponseBody;
@@ -16,9 +18,12 @@ public interface ApiInterface {
     @GET("/services")
     Call<ResponseBody> checkServerStatus();
 
-    @GET("/services/state?deviceId")
-    Call<StateResponse> getState(@Query("device id") String deviceId);
+    @GET("/services/state")
+    Call<StateResponse> getState(@Query("deviceId") String deviceId);
 
     @POST("/services/estimation")
     Call<EstimationResponse> getEstimations(@Body EstimationRequest estimationRequest);
+
+    @POST("/services/trips")
+    Call<StartTripResponse> startTrip(@Body StartTripRequest startTripRequest);
 }

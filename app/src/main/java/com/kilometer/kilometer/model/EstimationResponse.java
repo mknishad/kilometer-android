@@ -19,6 +19,8 @@ public class EstimationResponse implements Serializable {
     private String duration;
     @Expose
     private ArrayList<Estimation> estimations;
+    @Expose
+    private String error;
 
     public EstimationResponse() {
     }
@@ -81,15 +83,24 @@ public class EstimationResponse implements Serializable {
         this.estimations = estimations;
     }
 
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
     @Override
     public String toString() {
         return "EstimationResponse{" +
                 "status='" + status + '\'' +
-                ", from='" + from + '\'' +
-                ", to='" + to + '\'' +
+                ", from=" + from +
+                ", to=" + to +
                 ", distance='" + distance + '\'' +
                 ", duration='" + duration + '\'' +
                 ", estimations=" + estimations +
+                ", error='" + error + '\'' +
                 '}';
     }
 }

@@ -9,12 +9,15 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -45,10 +48,14 @@ import com.google.android.gms.tasks.Task;
 import com.kilometer.kilometer.R;
 import com.kilometer.kilometer.model.EstimationRequest;
 import com.kilometer.kilometer.model.EstimationResponse;
+import com.kilometer.kilometer.model.Passenger;
+import com.kilometer.kilometer.model.StartTripRequest;
+import com.kilometer.kilometer.model.StartTripResponse;
 import com.kilometer.kilometer.model.StateResponse;
 import com.kilometer.kilometer.model.Trip;
 import com.kilometer.kilometer.networking.ApiClient;
 import com.kilometer.kilometer.networking.ApiInterface;
+import com.kilometer.kilometer.util.ApplicationManager;
 import com.kilometer.kilometer.util.Constants;
 
 import java.io.IOException;
@@ -121,7 +128,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ApiInterface apiInterface;
     private EstimationResponse estimationResponse;
 
+    private String deviceId;
+    private String from;
+    private String to;
     private String vehicle;
+    private String name;
+    private String phone;
+    private Passenger passenger;
+    private com.kilometer.kilometer.model.Location location;
+    private StartTripResponse startTripResponse;
+
+    private String appState = Constants.NORMAL;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +154,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         getLocationPermission();
 
         stateResponse = (StateResponse) getIntent().getSerializableExtra(Constants.STATE_RESPONSE);
+        deviceId = getIntent().getStringExtra(Constants.DEVICE_ID);
         apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
     }
 
@@ -177,7 +195,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return false;
         });
 
-        if (stateResponse.isOnTrip()) {
+        if (stateResponse != null && stateResponse.isOnTrip()) {
             showOnTripDetails(stateResponse.getTrip());
         }
     }
@@ -186,17 +204,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.d(TAG, "showOnTripDetails: user is on a trip");
 
         pickUpEditText.setText(trip.getFrom());
+        pickUpEditText.setEnabled(false);
         dropOffEditText.setText(trip.getTo());
+        dropOffEditText.setEnabled(false);
 
         doneButton.setText(getString(R.string.end));
-        setTripDetails(trip);
-        infoLayout.setEnabled(false);
-        setVehicle(trip.getVehicle());
-        vehicleLayout.setEnabled(false);
-    }
-
-    private void setTripDetails(Trip trip) {
-
+        infoLayout.setVisibility(View.GONE);
+        separatorView.setVisibility(View.GONE);
+        vehicleLayout.setVisibility(View.GONE);
     }
 
     private void setVehicle(String vehicle) {
@@ -219,7 +234,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
                 carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
                 microImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
+                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(2).getFare() + " BDT");
                 vehicle = "suv";
                 break;
         }
@@ -315,6 +330,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         setCurrentAddress(currentLocation.getLatitude(), currentLocation.getLongitude());
                         moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
                                 DEFAULT_ZOOM);
+                        location = new com.kilometer.kilometer.model.Location(currentLocation.getLatitude(),
+                                currentLocation.getLongitude());
                     } else {
                         Log.e(TAG, "onComplete: current location is null");
                         Toast.makeText(MapsActivity.this, "Unable to get current location!",
@@ -428,7 +445,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void done() {
         Log.d(TAG, "done: ");
-        getEstimations();
+
+        if (appState.equals(Constants.NORMAL)) {
+            getEstimations();
+        } else if (appState.equals(Constants.ESTIMATIONS)) {
+            showStartDialog();
+        } else if (appState.equals(Constants.ON_TRIP)) {
+            endTrip();
+        }
     }
 
     private void getEstimations() {
@@ -437,8 +461,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if (TextUtils.isEmpty(pickUp) || TextUtils.isEmpty(dropOff)) {
             Log.d(TAG, "getEstimations: select pick up and drop off");
-            Toast.makeText(this, "Please select pick up and drop off location",
+            Toast.makeText(this, "Please enter pick up and drop off location",
                     Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!ApplicationManager.hasInternetConnection(this)) {
+            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "getEstimations: no internet connection!");
             return;
         }
 
@@ -458,15 +488,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.d(TAG, "onResponse: =========================================");
 
                 if (estimationResponse == null) {
-                    Log.e(TAG, "onResponse: response == null");
+                    Log.e(TAG, "onResponse: estimationResponse == null");
                     Toast.makeText(MapsActivity.this, "Internal server error!",
                             Toast.LENGTH_SHORT).show();
-                    return;
+                } else if (estimationResponse.getStatus().equals(Constants.SUCCESS)) {
+                    doneButton.setText(getString(R.string.start));
+                    pickUpEditText.setEnabled(false);
+                    clearPickUpImageView.setEnabled(false);
+                    dropOffEditText.setEnabled(false);
+                    clearDropOffImageView.setEnabled(false);
+                    myLocationImageButton.setEnabled(false);
+                    appState = Constants.ESTIMATIONS;
+                    vehicle = "bike";
+                    showEstimationDetails(estimationResponse);
+                } else if (estimationResponse.getStatus().equals(Constants.ERROR)) {
+                    Toast.makeText(MapsActivity.this, estimationResponse.getError(),
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MapsActivity.this, "Internal server error!",
+                            Toast.LENGTH_SHORT).show();
                 }
 
-                doneButton.setText(getString(R.string.start));
-
-                showEstimationDetails(estimationResponse);
             }
 
             @Override
@@ -488,6 +530,102 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         timeTextView.setText("Time: " + estimationResponse.getDuration() + " min");
         fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
         motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+    }
+
+    private void showStartDialog() {
+        final AlertDialog dialogBuilder = new AlertDialog.Builder(this).create();
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.custom_dialog, null);
+
+        final TextInputLayout nameWrapper = dialogView.findViewById(R.id.nameWrapper);
+        final TextInputLayout phoneWrapper = dialogView.findViewById(R.id.phoneWrapper);
+        Button startButton = dialogView.findViewById(R.id.startButton);
+
+        startButton.setOnClickListener(view -> {
+            name = nameWrapper.getEditText().getText().toString().trim();
+            phone = phoneWrapper.getEditText().getText().toString().trim();
+
+            if (TextUtils.isDigitsOnly(name)) {
+                Toast.makeText(this, "Please enter passenger name", Toast.LENGTH_SHORT).show();
+                return;
+            } else if (TextUtils.isEmpty(phone)) {
+                Toast.makeText(this, "Please enter passenger phone number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            startTrip();
+            dialogBuilder.dismiss();
+        });
+
+        dialogBuilder.setView(dialogView);
+        dialogBuilder.show();
+    }
+
+    private void startTrip() {
+
+        if (!ApplicationManager.hasInternetConnection(this)) {
+            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "startTrip: no internet connection!");
+            return;
+        }
+
+        showProgressBar();
+
+        from = pickUpEditText.getText().toString().trim();
+        to = dropOffEditText.getText().toString().trim();
+        passenger = new Passenger(name, phone);
+        StartTripRequest startTripRequest = new StartTripRequest(deviceId, from, to, vehicle,
+                passenger, location);
+
+        Log.d(TAG, "startTrip: =======================================");
+        Log.d(TAG, "startTrip: startTripRequest: " + startTripRequest);
+        Log.d(TAG, "startTrip: =======================================");
+
+        Call<StartTripResponse> responseCall = apiInterface.startTrip(startTripRequest);
+        responseCall.enqueue(new Callback<StartTripResponse>() {
+            @Override
+            public void onResponse(Call<StartTripResponse> call, Response<StartTripResponse> response) {
+                hideProgressBar();
+                startTripResponse = response.body();
+
+                Log.d(TAG, "onResponse: =======================================");
+                Log.d(TAG, "onResponse: startTripResponse: " + startTripResponse);
+                Log.d(TAG, "onResponse: =======================================");
+
+                if (startTripResponse == null) {
+                    Log.e(TAG, "onResponse: startTripResponse == null");
+                    Toast.makeText(MapsActivity.this, "Internal server error!",
+                            Toast.LENGTH_SHORT).show();
+                } else if (startTripResponse.getStatus().equals(Constants.SUCCESS)) {
+                    doneButton.setText(getResources().getString(R.string.end));
+                    hideInfoLayout();
+                    appState = Constants.ON_TRIP;
+                } else if (startTripResponse.getStatus().equals(Constants.ERROR)) {
+                    Toast.makeText(MapsActivity.this, startTripResponse.getError(),
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MapsActivity.this, "Internal server error!",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<StartTripResponse> call, Throwable t) {
+                hideProgressBar();
+                Log.e(TAG, "onFailure: " + t.getMessage(), t);
+                Toast.makeText(MapsActivity.this, "Internal server error!",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void hideInfoLayout() {
+        infoLayout.setVisibility(View.GONE);
+        vehicleLayout.setVisibility(View.GONE);
+    }
+
+    private void endTrip() {
+
     }
 
     @Override

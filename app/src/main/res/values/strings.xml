@@ -8,4 +8,6 @@
     <string name="my_location">My Location</string>
     <string name="start">Start</string>
     <string name="end">End</string>
+    <string name="name">Name</string>
+    <string name="phone">Phone</string>
 </resources>

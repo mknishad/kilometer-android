@@ -54,6 +54,7 @@ import com.kilometer.kilometer.util.Constants;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -308,6 +309,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (task.isSuccessful()) {
                         Log.d(TAG, "onComplete: location fount");
                         Location currentLocation = (Location) task.getResult();
+                        Log.d(TAG, "getDeviceLocation: =============================");
+                        Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
+                        Log.d(TAG, "getDeviceLocation: =============================");
+                        setCurrentAddress(currentLocation.getLatitude(), currentLocation.getLongitude());
                         moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
                                 DEFAULT_ZOOM);
                     } else {
@@ -319,6 +324,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         } catch (SecurityException e) {
             Log.e(TAG, "getDeviceLocation: SecurityException: " + e.getMessage(), e);
+        }
+    }
+
+    public void setCurrentAddress(double lat, double lng) {
+        Geocoder geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+            Address address = addresses.get(0);
+            Log.d(TAG, "setCurrentAddress: address: " + address.toString());
+            String currentAddress = address.getAddressLine(0);
+            Log.d(TAG, "setCurrentAddress: add: " + currentAddress);
+
+            pickUpEditText.setText(currentAddress);
+        } catch (IOException e) {
+            Log.e(TAG, "setCurrentAddress: IOException: " + e.getMessage(), e);
         }
     }
 

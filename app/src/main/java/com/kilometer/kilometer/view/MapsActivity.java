@@ -46,6 +46,8 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.Task;
 import com.kilometer.kilometer.R;
+import com.kilometer.kilometer.model.EndTripRequest;
+import com.kilometer.kilometer.model.EndTripResponse;
 import com.kilometer.kilometer.model.EstimationRequest;
 import com.kilometer.kilometer.model.EstimationResponse;
 import com.kilometer.kilometer.model.Passenger;
@@ -107,11 +109,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @BindView(R.id.separatorView)
     View separatorView;
     @BindView(R.id.bikeImageView)
-    ImageView motorCycleImageView;
+    ImageView bikeImageView;
     @BindView(R.id.carImageView)
     ImageView carImageView;
     @BindView(R.id.suvImageView)
-    ImageView microImageView;
+    ImageView suvImageView;
     @BindView(R.id.vehicleLayout)
     LinearLayout vehicleLayout;
     @BindView(R.id.bottomLayout)
@@ -127,6 +129,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private StateResponse stateResponse;
     private ApiInterface apiInterface;
     private EstimationResponse estimationResponse;
+    private StartTripResponse startTripResponse;
+    private EndTripResponse endTripResponse;
 
     private String deviceId;
     private String from;
@@ -136,7 +140,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String phone;
     private Passenger passenger;
     private com.kilometer.kilometer.model.Location location;
-    private StartTripResponse startTripResponse;
+    private Trip trip;
 
     private String appState = Constants.NORMAL;
 
@@ -154,6 +158,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         getLocationPermission();
 
         stateResponse = (StateResponse) getIntent().getSerializableExtra(Constants.STATE_RESPONSE);
+        trip = stateResponse.getTrip();
         deviceId = getIntent().getStringExtra(Constants.DEVICE_ID);
         apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
     }
@@ -212,28 +217,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         infoLayout.setVisibility(View.GONE);
         separatorView.setVisibility(View.GONE);
         vehicleLayout.setVisibility(View.GONE);
+        appState = Constants.ON_TRIP;
     }
 
     private void setVehicle(String vehicle) {
         switch (vehicle) {
             case "bike":
-                motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                microImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
                 fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
                 vehicle = "bike";
                 break;
             case "car":
-                motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                microImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
                 fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(1).getFare() + " BDT");
                 vehicle = "car";
                 break;
             case "suv":
-                motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                microImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                suvImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
                 fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(2).getFare() + " BDT");
                 vehicle = "suv";
                 break;
@@ -446,12 +452,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void done() {
         Log.d(TAG, "done: ");
 
-        if (appState.equals(Constants.NORMAL)) {
-            getEstimations();
-        } else if (appState.equals(Constants.ESTIMATIONS)) {
-            showStartDialog();
-        } else if (appState.equals(Constants.ON_TRIP)) {
-            endTrip();
+        switch (appState) {
+            case Constants.NORMAL:
+                getEstimations();
+                break;
+            case Constants.ESTIMATIONS:
+                showStartDialog();
+                break;
+            case Constants.ON_TRIP:
+                endTrip();
+                break;
         }
     }
 
@@ -459,9 +469,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String pickUp = pickUpEditText.getText().toString().trim();
         String dropOff = dropOffEditText.getText().toString().trim();
 
-        if (TextUtils.isEmpty(pickUp) || TextUtils.isEmpty(dropOff)) {
-            Log.d(TAG, "getEstimations: select pick up and drop off");
-            Toast.makeText(this, "Please enter pick up and drop off location",
+        if (TextUtils.isEmpty(pickUp)) {
+            Log.d(TAG, "getEstimations: select pick up");
+            Toast.makeText(this, "Please enter pick up location",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        } else if (TextUtils.isEmpty(dropOff)) {
+            Log.d(TAG, "getEstimations: select drop off");
+            Toast.makeText(this, "Please enter drop off location",
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -508,7 +523,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Toast.makeText(MapsActivity.this, "Internal server error!",
                             Toast.LENGTH_SHORT).show();
                 }
-
             }
 
             @Override
@@ -529,23 +543,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         distanceTextView.setText("Distance: " + estimationResponse.getDistance() + " km");
         timeTextView.setText("Time: " + estimationResponse.getDuration() + " min");
         fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
-        motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+        bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
     }
 
     private void showStartDialog() {
         final AlertDialog dialogBuilder = new AlertDialog.Builder(this).create();
         LayoutInflater inflater = this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.custom_dialog, null);
+        View dialogView = inflater.inflate(R.layout.custom_dialog_start_trip, null);
 
-        final TextInputLayout nameWrapper = dialogView.findViewById(R.id.nameWrapper);
-        final TextInputLayout phoneWrapper = dialogView.findViewById(R.id.phoneWrapper);
+        TextInputLayout nameWrapper = dialogView.findViewById(R.id.nameWrapper);
+        TextInputLayout phoneWrapper = dialogView.findViewById(R.id.phoneWrapper);
         Button startButton = dialogView.findViewById(R.id.startButton);
 
         startButton.setOnClickListener(view -> {
             name = nameWrapper.getEditText().getText().toString().trim();
             phone = phoneWrapper.getEditText().getText().toString().trim();
 
-            if (TextUtils.isDigitsOnly(name)) {
+            ApplicationManager.hideKeyboard(this);
+
+            if (TextUtils.isEmpty(name)) {
                 Toast.makeText(this, "Please enter passenger name", Toast.LENGTH_SHORT).show();
                 return;
             } else if (TextUtils.isEmpty(phone)) {
@@ -562,6 +578,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void startTrip() {
+        Log.d(TAG, "startTrip: ");
 
         if (!ApplicationManager.hasInternetConnection(this)) {
             Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
@@ -600,6 +617,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     doneButton.setText(getResources().getString(R.string.end));
                     hideInfoLayout();
                     appState = Constants.ON_TRIP;
+                    trip = startTripResponse.getTrip();
                 } else if (startTripResponse.getStatus().equals(Constants.ERROR)) {
                     Toast.makeText(MapsActivity.this, startTripResponse.getError(),
                             Toast.LENGTH_SHORT).show();
@@ -621,11 +639,121 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void hideInfoLayout() {
         infoLayout.setVisibility(View.GONE);
+        separatorView.setVisibility(View.GONE);
         vehicleLayout.setVisibility(View.GONE);
     }
 
     private void endTrip() {
+        Log.d(TAG, "endTrip: ");
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        showProgressBar();
 
+        try {
+            if (mLocationPermissionGranted) {
+                Task locationTask = mFusedLocationProviderClient.getLastLocation();
+                locationTask.addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "onComplete: location fount");
+                        Location currentLocation = (Location) task.getResult();
+                        Log.d(TAG, "getDeviceLocation: ==============================================");
+                        Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
+                        Log.d(TAG, "getDeviceLocation: ==============================================");
+                        com.kilometer.kilometer.model.Location endLocation = new com.kilometer.kilometer.model.Location(currentLocation.getLatitude(),
+                                currentLocation.getLongitude());
+                        if (ApplicationManager.hasInternetConnection(this)) {
+                            callEndTripService(endLocation);
+                        } else {
+                            Log.e(TAG, "endTrip: No internet connection!");
+                            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Log.e(TAG, "onComplete: current location is null");
+                        Toast.makeText(MapsActivity.this, "Unable to get current location!",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "getDeviceLocation: SecurityException: " + e.getMessage(), e);
+        }
+    }
+
+    private void callEndTripService(com.kilometer.kilometer.model.Location endLocation) {
+        EndTripRequest endTripRequest = new EndTripRequest(deviceId, endLocation);
+        Call<EndTripResponse> responseCall = apiInterface.endTrip(trip.getId(), endTripRequest);
+        responseCall.enqueue(new Callback<EndTripResponse>() {
+            @Override
+            public void onResponse(Call<EndTripResponse> call, Response<EndTripResponse> response) {
+                Log.d(TAG, "onResponse: ");
+                hideProgressBar();
+
+                endTripResponse = response.body();
+
+                if (endTripResponse == null) {
+                    Log.e(TAG, "onResponse: endTripResponse == null");
+                    Toast.makeText(MapsActivity.this, "Internal server error!",
+                            Toast.LENGTH_SHORT).show();
+                } else if (endTripResponse.getStatus().equals(Constants.SUCCESS)) {
+                    showEndDialog();
+                } else if (endTripResponse.getStatus().equals(Constants.ERROR)) {
+                    Log.e(TAG, "onResponse: endTripResponse.getError() == " +
+                            endTripResponse.getError());
+                    Toast.makeText(MapsActivity.this, endTripResponse.getError(),
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.e(TAG, "onResponse: else");
+                    Toast.makeText(MapsActivity.this, "Internal server error!",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<EndTripResponse> call, Throwable t) {
+                hideProgressBar();
+                Log.e(TAG, "onFailure: " + t.getMessage(), t);
+                Toast.makeText(MapsActivity.this, "Internal server error!",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showEndDialog() {
+        final AlertDialog dialogBuilder = new AlertDialog.Builder(this).create();
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.custom_dialog_end_trip, null);
+
+        TextView nameTextView = dialogView.findViewById(R.id.nameTextView);
+        TextView phoneTextView = dialogView.findViewById(R.id.phoneTextView);
+        TextView fareTextView = dialogView.findViewById(R.id.fareTextView);
+        Button doneTripButton = dialogView.findViewById(R.id.doneTripButton);
+
+        nameTextView.setText(trip.getPassenger().getName());
+        phoneTextView.setText(trip.getPassenger().getPhone());
+        fareTextView.setText("Fare: " + endTripResponse.getFare());
+
+        doneTripButton.setOnClickListener(view -> {
+            setViewsToInitialLook();
+            appState = Constants.NORMAL;
+            getDeviceLocation();
+            dialogBuilder.dismiss();
+        });
+
+        dialogBuilder.setView(dialogView);
+        dialogBuilder.show();
+    }
+
+    private void setViewsToInitialLook() {
+        doneButton.setText(getResources().getString(R.string.done));
+        pickUpEditText.setText("");
+        pickUpEditText.setEnabled(true);
+        dropOffEditText.setText("");
+        dropOffEditText.setEnabled(true);
+        clearPickUpImageView.setEnabled(true);
+        clearDropOffImageView.setEnabled(true);
+        myLocationImageButton.setEnabled(true);
+        bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+        carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+        suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
     }
 
     @Override
@@ -643,5 +771,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void hideProgressBar() {
         progressBar.setVisibility(View.GONE);
+    }
+
+    private void hideSoftKeyboard() {
+
     }
 }

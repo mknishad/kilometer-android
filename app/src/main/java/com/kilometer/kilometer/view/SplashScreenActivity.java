@@ -84,7 +84,9 @@ public class SplashScreenActivity extends AppCompatActivity {
                     return;
                 }
 
-                Log.d(TAG, "onResponse: stateResponse.isOnTrip() = " + stateResponse.isOnTrip());
+                Log.d(TAG, "onResponse:================================");
+                Log.d(TAG, "onResponse: stateResponse: " + stateResponse);
+                Log.d(TAG, "onResponse:================================");
 
                 openMap();
             }
@@ -94,6 +96,7 @@ public class SplashScreenActivity extends AppCompatActivity {
                 Log.e(TAG, "onFailure: " + t.getMessage(), t);
                 Toast.makeText(SplashScreenActivity.this, "Internal server error!",
                         Toast.LENGTH_SHORT).show();
+                finish();
             }
         });
     }

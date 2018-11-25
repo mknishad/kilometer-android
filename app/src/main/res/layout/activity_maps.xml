@@ -142,6 +142,14 @@
             android:textAllCaps="false"
             android:textSize="24sp" />
 
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/infoLayout"
             android:orientation="horizontal"
@@ -164,13 +172,13 @@
 
                 <TextView
                     android:id="@+id/distanceTextView"
-                    android:text="Distance: 12 km"
+                    tools:text="Distance: 12 km"
                     android:textSize="16sp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
                 <TextView
                     android:id="@+id/timeTextView"
-                    android:text="Time: 30 min"
+                    tools:text="Time: 30 min"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp"
                     android:layout_width="wrap_content"
@@ -179,7 +187,7 @@
 
             <TextView
                 android:id="@+id/fareTextView"
-                android:text="Fare: $4.43"
+                tools:text="Fare: $4.43"
                 android:textSize="20sp"
                 android:layout_gravity="center_vertical"
                 android:layout_marginLeft="8dp"
@@ -199,14 +207,14 @@
             android:id="@+id/vehicleLayout"
             android:orientation="horizontal"
             android:background="@android:color/white"
-            android:padding="8dp"
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <ImageView
-                android:id="@+id/motorCycleImageView"
+                android:id="@+id/bikeImageView"
                 android:src="@drawable/ic_bike_black"
+                android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content" />
@@ -214,13 +222,15 @@
             <ImageView
                 android:id="@+id/carImageView"
                 android:src="@drawable/ic_car_black"
+                android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content" />
 
             <ImageView
-                android:id="@+id/microImageView"
+                android:id="@+id/suvImageView"
                 android:src="@drawable/ic_micro_black"
+                android:padding="8dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content" />

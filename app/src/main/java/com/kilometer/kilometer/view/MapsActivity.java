@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -23,6 +24,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +43,13 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.Task;
 import com.kilometer.kilometer.R;
+import com.kilometer.kilometer.model.EstimationRequest;
+import com.kilometer.kilometer.model.EstimationResponse;
+import com.kilometer.kilometer.model.StateResponse;
+import com.kilometer.kilometer.model.Trip;
+import com.kilometer.kilometer.networking.ApiClient;
+import com.kilometer.kilometer.networking.ApiInterface;
+import com.kilometer.kilometer.util.Constants;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +58,9 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
 
@@ -56,7 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-    private static final float DEFAULT_ZOOM = 14.0f;
+    private static final float DEFAULT_ZOOM = 15.0f;
     private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(
             new LatLng(-40, -168), new LatLng(71, 136));
 
@@ -74,6 +86,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ImageButton myLocationImageButton;
     @BindView(R.id.doneButton)
     Button doneButton;
+    @BindView(R.id.progressBar)
+    ProgressBar progressBar;
     @BindView(R.id.distanceTextView)
     TextView distanceTextView;
     @BindView(R.id.timeTextView)
@@ -84,11 +98,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LinearLayout infoLayout;
     @BindView(R.id.separatorView)
     View separatorView;
-    @BindView(R.id.motorCycleImageView)
+    @BindView(R.id.bikeImageView)
     ImageView motorCycleImageView;
     @BindView(R.id.carImageView)
     ImageView carImageView;
-    @BindView(R.id.microImageView)
+    @BindView(R.id.suvImageView)
     ImageView microImageView;
     @BindView(R.id.vehicleLayout)
     LinearLayout vehicleLayout;
@@ -102,6 +116,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private GeoDataClient mGeoDataClient;
 
+    private StateResponse stateResponse;
+    private ApiInterface apiInterface;
+    private EstimationResponse estimationResponse;
+
+    private String vehicle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -114,10 +134,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         getLocationPermission();
+
+        stateResponse = (StateResponse) getIntent().getSerializableExtra(Constants.STATE_RESPONSE);
+        apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
     }
 
     private void init() {
-        Log.d(TAG, "init: ");
+        Log.d(TAG, "init:------------------------------------");
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Places.GEO_DATA_API)
@@ -152,6 +175,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             return false;
         });
+
+        if (stateResponse.isOnTrip()) {
+            showOnTripDetails(stateResponse.getTrip());
+        }
+    }
+
+    private void showOnTripDetails(Trip trip) {
+        Log.d(TAG, "showOnTripDetails: user is on a trip");
+
+        pickUpEditText.setText(trip.getFrom());
+        dropOffEditText.setText(trip.getTo());
+
+        doneButton.setText(getString(R.string.end));
+        setTripDetails(trip);
+        infoLayout.setEnabled(false);
+        setVehicle(trip.getVehicle());
+        vehicleLayout.setEnabled(false);
+    }
+
+    private void setTripDetails(Trip trip) {
+
+    }
+
+    private void setVehicle(String vehicle) {
+        switch (vehicle) {
+            case "bike":
+                motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                microImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
+                vehicle = "bike";
+                break;
+            case "car":
+                motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                microImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(1).getFare() + " BDT");
+                vehicle = "car";
+                break;
+            case "suv":
+                motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                microImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
+                vehicle = "suv";
+                break;
+        }
     }
 
     private void geoLocate() {
@@ -301,7 +371,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton, R.id.motorCycleImageView, R.id.carImageView, R.id.microImageView, R.id.myLocationImageButton})
+    @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton, R.id.bikeImageView, R.id.carImageView, R.id.suvImageView, R.id.myLocationImageButton})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.clearPickUpImageView:
@@ -313,11 +383,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             case R.id.doneButton:
                 done();
                 break;
-            case R.id.motorCycleImageView:
+            case R.id.bikeImageView:
+                setVehicle("bike");
                 break;
             case R.id.carImageView:
+                setVehicle("car");
                 break;
-            case R.id.microImageView:
+            case R.id.suvImageView:
+                setVehicle("suv");
                 break;
             case R.id.myLocationImageButton:
                 getDeviceLocation();
@@ -335,10 +408,66 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void done() {
         Log.d(TAG, "done: ");
-        doneButton.setText("Start");
+        getEstimations();
+    }
+
+    private void getEstimations() {
+        String pickUp = pickUpEditText.getText().toString().trim();
+        String dropOff = dropOffEditText.getText().toString().trim();
+
+        if (TextUtils.isEmpty(pickUp) || TextUtils.isEmpty(dropOff)) {
+            Log.d(TAG, "getEstimations: select pick up and drop off");
+            Toast.makeText(this, "Please select pick up and drop off location",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        showProgressBar();
+        EstimationRequest estimationRequest = new EstimationRequest(pickUp, dropOff);
+
+        Call<EstimationResponse> estimationResponseCall = apiInterface.getEstimations(estimationRequest);
+        estimationResponseCall.enqueue(new Callback<EstimationResponse>() {
+            @Override
+            public void onResponse(Call<EstimationResponse> call, Response<EstimationResponse> response) {
+                hideProgressBar();
+                Log.d(TAG, "onResponse: ");
+                estimationResponse = response.body();
+
+                Log.d(TAG, "onResponse: =========================================");
+                Log.d(TAG, "onResponse: estimationResponse: " + estimationResponse);
+                Log.d(TAG, "onResponse: =========================================");
+
+                if (estimationResponse == null) {
+                    Log.e(TAG, "onResponse: response == null");
+                    Toast.makeText(MapsActivity.this, "Internal server error!",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                doneButton.setText(getString(R.string.start));
+
+                showEstimationDetails(estimationResponse);
+            }
+
+            @Override
+            public void onFailure(Call<EstimationResponse> call, Throwable t) {
+                hideProgressBar();
+                Log.e(TAG, "onFailure: " + t.getMessage(), t);
+                Toast.makeText(MapsActivity.this, "Internal server error!",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showEstimationDetails(EstimationResponse estimationResponse) {
         infoLayout.setVisibility(View.VISIBLE);
         separatorView.setVisibility(View.VISIBLE);
         vehicleLayout.setVisibility(View.VISIBLE);
+
+        distanceTextView.setText("Distance: " + estimationResponse.getDistance() + " km");
+        timeTextView.setText("Time: " + estimationResponse.getDuration() + " min");
+        fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
+        motorCycleImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
     }
 
     @Override
@@ -348,5 +477,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void closeSoftKeyboard() {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+    }
+
+    private void showProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideProgressBar() {
+        progressBar.setVisibility(View.GONE);
     }
 }

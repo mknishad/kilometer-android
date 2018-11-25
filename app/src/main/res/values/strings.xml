@@ -6,4 +6,6 @@
     <string name="drop_off">Drop Off</string>
     <string name="clear">clear</string>
     <string name="my_location">My Location</string>
+    <string name="start">Start</string>
+    <string name="end">End</string>
 </resources>

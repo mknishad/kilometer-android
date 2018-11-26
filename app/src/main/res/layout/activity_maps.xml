@@ -38,7 +38,7 @@
             android:layout_height="16dp"
             android:layout_gravity="center_vertical"
             android:contentDescription="@string/pick_up"
-            android:src="@drawable/ic_rectangle_black_solid" />
+            android:src="@drawable/ic_pick_up" />
 
         <AutoCompleteTextView
             android:id="@+id/pickUpEditText"
@@ -82,7 +82,7 @@
             android:layout_height="16dp"
             android:layout_gravity="center_vertical"
             android:contentDescription="@string/drop_off"
-            android:src="@drawable/ic_circle_black_solid" />
+            android:src="@drawable/ic_drop_off" />
 
         <AutoCompleteTextView
             android:id="@+id/dropOffEditText"

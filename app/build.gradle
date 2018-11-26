@@ -41,4 +41,7 @@ dependencies {
     // retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
+
+    // google directions android
+    implementation 'com.github.jd-alexander:library:1.1.0'
 }

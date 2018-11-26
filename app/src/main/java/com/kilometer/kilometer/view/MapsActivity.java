@@ -3,9 +3,11 @@ package com.kilometer.kilometer.view;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -31,19 +33,30 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.GeoDataClient;
 import com.google.android.gms.location.places.Places;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
 import com.kilometer.kilometer.R;
 import com.kilometer.kilometer.model.EndTripRequest;
@@ -60,7 +73,14 @@ import com.kilometer.kilometer.networking.ApiInterface;
 import com.kilometer.kilometer.util.ApplicationManager;
 import com.kilometer.kilometer.util.Constants;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -72,7 +92,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+public class MapsActivity extends FragmentActivity implements RoutingListener, OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "MapsActivity";
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -139,10 +159,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String name;
     private String phone;
     private Passenger passenger;
-    private com.kilometer.kilometer.model.Location location;
+    private com.kilometer.kilometer.model.Location pickUpLocation;
+    private com.kilometer.kilometer.model.Location dropOffLocation;
     private Trip trip;
 
     private String appState = Constants.NORMAL;
+
+    private List<Polyline> polylines = new ArrayList<>();
+    private static final int[] COLORS = new int[]{R.color.colorAccent};
+
+    private Marker startMarker;
+    private Marker endMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -212,12 +239,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         pickUpEditText.setEnabled(false);
         dropOffEditText.setText(trip.getTo());
         dropOffEditText.setEnabled(false);
+        clearPickUpImageView.setEnabled(false);
+        clearDropOffImageView.setEnabled(false);
+        myLocationImageButton.setEnabled(false);
 
         doneButton.setText(getString(R.string.end));
         infoLayout.setVisibility(View.GONE);
         separatorView.setVisibility(View.GONE);
         vehicleLayout.setVisibility(View.GONE);
         appState = Constants.ON_TRIP;
+
+        pickUpLocation = getLocationFromAddress(trip.getFrom());
+        dropOffLocation = getLocationFromAddress(trip.getTo());
+
+        drawPath();
     }
 
     private void setVehicle(String vehicle) {
@@ -262,7 +297,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (addressList.size() > 0) {
             Address address = addressList.get(0);
 
-            Log.d(TAG, "geoLocate: found a location: " + address.toString());
+            Log.d(TAG, "geoLocate: found a pickUpLocation: " + address.toString());
         }
     }
 
@@ -319,7 +354,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getDeviceLocation() {
-        Log.d(TAG, "getDeviceLocation: getting devices current location...");
+        Log.d(TAG, "getDeviceLocation: getting devices current pickUpLocation...");
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -328,7 +363,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Task locationTask = mFusedLocationProviderClient.getLastLocation();
                 locationTask.addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.d(TAG, "onComplete: location fount");
+                        Log.d(TAG, "onComplete: pickUpLocation fount");
                         Location currentLocation = (Location) task.getResult();
                         Log.d(TAG, "getDeviceLocation: =============================");
                         Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
@@ -336,11 +371,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         setCurrentAddress(currentLocation.getLatitude(), currentLocation.getLongitude());
                         moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
                                 DEFAULT_ZOOM);
-                        location = new com.kilometer.kilometer.model.Location(currentLocation.getLatitude(),
+                        pickUpLocation = new com.kilometer.kilometer.model.Location(currentLocation.getLatitude(),
                                 currentLocation.getLongitude());
                     } else {
-                        Log.e(TAG, "onComplete: current location is null");
-                        Toast.makeText(MapsActivity.this, "Unable to get current location!",
+                        Log.e(TAG, "onComplete: current pickUpLocation is null");
+                        Toast.makeText(MapsActivity.this, "Unable to get current pickUpLocation!",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -372,7 +407,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getLocationPermission() {
-        Log.d(TAG, "getLocationPermission: getting location permissions");
+        Log.d(TAG, "getLocationPermission: getting pickUpLocation permissions");
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
 
@@ -471,12 +506,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if (TextUtils.isEmpty(pickUp)) {
             Log.d(TAG, "getEstimations: select pick up");
-            Toast.makeText(this, "Please enter pick up location",
+            Toast.makeText(this, "Please enter pick up pickUpLocation",
                     Toast.LENGTH_SHORT).show();
             return;
         } else if (TextUtils.isEmpty(dropOff)) {
             Log.d(TAG, "getEstimations: select drop off");
-            Toast.makeText(this, "Please enter drop off location",
+            Toast.makeText(this, "Please enter drop off pickUpLocation",
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -592,7 +627,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         to = dropOffEditText.getText().toString().trim();
         passenger = new Passenger(name, phone);
         StartTripRequest startTripRequest = new StartTripRequest(deviceId, from, to, vehicle,
-                passenger, location);
+                passenger, pickUpLocation);
 
         Log.d(TAG, "startTrip: =======================================");
         Log.d(TAG, "startTrip: startTripRequest: " + startTripRequest);
@@ -618,6 +653,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     hideInfoLayout();
                     appState = Constants.ON_TRIP;
                     trip = startTripResponse.getTrip();
+                    dropOffLocation = getLocationFromAddress(to);
+                    drawPath();
                 } else if (startTripResponse.getStatus().equals(Constants.ERROR)) {
                     Toast.makeText(MapsActivity.this, startTripResponse.getError(),
                             Toast.LENGTH_SHORT).show();
@@ -637,6 +674,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
+    private void drawPath() {
+        showProgressBar();
+
+        Routing routing = new Routing.Builder()
+                .travelMode(AbstractRouting.TravelMode.DRIVING)
+                .withListener(this)
+                .alternativeRoutes(false)
+                .waypoints(new LatLng(pickUpLocation.getLat(), pickUpLocation.getLng()),
+                        new LatLng(dropOffLocation.getLat(), dropOffLocation.getLng()))
+                .key(getString(R.string.server_key))
+                .build();
+        routing.execute();
+    }
+
     private void hideInfoLayout() {
         infoLayout.setVisibility(View.GONE);
         separatorView.setVisibility(View.GONE);
@@ -653,7 +704,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Task locationTask = mFusedLocationProviderClient.getLastLocation();
                 locationTask.addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.d(TAG, "onComplete: location fount");
+                        Log.d(TAG, "onComplete: pickUpLocation fount");
                         Location currentLocation = (Location) task.getResult();
                         Log.d(TAG, "getDeviceLocation: ==============================================");
                         Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
@@ -667,8 +718,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Log.e(TAG, "onComplete: current location is null");
-                        Toast.makeText(MapsActivity.this, "Unable to get current location!",
+                        Log.e(TAG, "onComplete: current pickUpLocation is null");
+                        Toast.makeText(MapsActivity.this, "Unable to get current pickUpLocation!",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -754,6 +805,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
         carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
         suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+        removePath();
     }
 
     @Override
@@ -773,7 +825,94 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         progressBar.setVisibility(View.GONE);
     }
 
-    private void hideSoftKeyboard() {
+    private com.kilometer.kilometer.model.Location getLocationFromAddress(String address) {
+        Log.d(TAG, "getLocationFromAddress: ");
+        Geocoder coder = new Geocoder(this);
+        com.kilometer.kilometer.model.Location location = new com.kilometer.kilometer.model.Location();
+        try {
+            ArrayList<Address> addresses = (ArrayList<Address>) coder.getFromLocationName(address, 5);
+            Address foundAddress = addresses.get(0);
+            location = new com.kilometer.kilometer.model.Location(foundAddress.getLatitude(),
+                    foundAddress.getLongitude());
+            Log.d(TAG, "getLocationFromAddress: =============================");
+            Log.d(TAG, "getLocationFromAddress: foundAddress: " + foundAddress);
+            Log.d(TAG, "getLocationFromAddress: =============================");
+        } catch (IOException e) {
+            Log.e(TAG, "getLocationFromAddress: IOException: " + e.getMessage(), e);
+        }
 
+        return location;
+    }
+
+    @Override
+    public void onRoutingFailure(RouteException e) {
+        hideProgressBar();
+        Log.e(TAG, "onRoutingFailure: RouteException: " + e.getMessage(), e);
+        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onRoutingStart() {
+        Log.d(TAG, "onRoutingStart: ");
+    }
+
+    @Override
+    public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
+        hideProgressBar();
+        CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(pickUpLocation.getLat(),
+                pickUpLocation.getLng()));
+
+        mMap.moveCamera(center);
+
+        if (polylines.size() > 0) {
+            for (Polyline poly : polylines) {
+                poly.remove();
+            }
+        }
+
+        polylines = new ArrayList<>();
+        //add route(s) to the map.
+        for (int i = 0; i < route.size(); i++) {
+
+            //In case of more than 5 alternative routes
+            int colorIndex = i % COLORS.length;
+
+            PolylineOptions polyOptions = new PolylineOptions();
+            polyOptions.color(getResources().getColor(COLORS[colorIndex]));
+            polyOptions.width(10 + i * 3);
+            polyOptions.addAll(route.get(i).getPoints());
+            Polyline polyline = mMap.addPolyline(polyOptions);
+            polylines.add(polyline);
+
+            Log.d(TAG, "Route " + (i + 1) + ": distance - " + route.get(i).getDistanceValue() +
+                    ": duration - " + route.get(i).getDurationValue());
+        }
+
+        // Start marker
+        MarkerOptions options = new MarkerOptions();
+        options.position(new LatLng(pickUpLocation.getLat(), pickUpLocation.getLng()));
+        options.icon(ApplicationManager.bitmapDescriptorFromVector(this, R.drawable.ic_pick_up));
+        startMarker = mMap.addMarker(options);
+
+        // End marker
+        options = new MarkerOptions();
+        options.position(new LatLng(dropOffLocation.getLat(), dropOffLocation.getLng()));
+        options.icon(ApplicationManager.bitmapDescriptorFromVector(this, R.drawable.ic_drop_off));
+        endMarker = mMap.addMarker(options);
+    }
+
+    @Override
+    public void onRoutingCancelled() {
+        Log.e(TAG, "onRoutingCancelled: ");
+        hideProgressBar();
+    }
+
+    private void removePath() {
+        for (Polyline line : polylines) {
+            line.remove();
+        }
+        polylines.clear();
+        if (startMarker != null) startMarker.remove();
+        if (endMarker != null) endMarker.remove();
     }
 }

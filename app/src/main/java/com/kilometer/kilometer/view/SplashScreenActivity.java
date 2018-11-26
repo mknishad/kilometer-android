@@ -1,15 +1,27 @@
 package com.kilometer.kilometer.view;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.kilometer.kilometer.model.StateResponse;
 import com.kilometer.kilometer.networking.ApiClient;
 import com.kilometer.kilometer.networking.ApiInterface;
@@ -25,6 +37,7 @@ public class SplashScreenActivity extends AppCompatActivity {
 
     private static final String TAG = "SplashScreenActivity";
     private static final int ERROR_DIALOG_REQUEST = 1000;
+    private static final int REQUEST_CHECK_SETTINGS = 1001;
 
     private String androidId;
     private ApiInterface apiInterface;
@@ -39,7 +52,7 @@ public class SplashScreenActivity extends AppCompatActivity {
         checkServerStatus();
 
         if (isPlayServicesOk()) {
-            init();
+            createLocationRequest();
         } else {
             finish();
         }
@@ -76,6 +89,45 @@ public class SplashScreenActivity extends AppCompatActivity {
             Toast.makeText(SplashScreenActivity.this, "You can't make map requests!", Toast.LENGTH_SHORT).show();
         }
         return false;
+    }
+
+    protected void createLocationRequest() {
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(mLocationRequest);
+
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+
+        task.addOnSuccessListener(this, locationSettingsResponse -> {
+            // All location settings are satisfied. The client can initialize
+            // location requests here.
+            // ...
+            init();
+        });
+
+        task.addOnFailureListener(this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                if (e instanceof ResolvableApiException) {
+                    // Location settings are not satisfied, but this can be fixed
+                    // by showing the user a dialog.
+                    try {
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        ResolvableApiException resolvable = (ResolvableApiException) e;
+                        resolvable.startResolutionForResult(SplashScreenActivity.this,
+                                REQUEST_CHECK_SETTINGS);
+                    } catch (IntentSender.SendIntentException sendEx) {
+                        // Ignore the error.
+                    }
+                }
+            }
+        });
     }
 
     private void init() {
@@ -128,5 +180,19 @@ public class SplashScreenActivity extends AppCompatActivity {
         intent.putExtra(Constants.DEVICE_ID, androidId);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        switch (requestCode) {
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        init();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        finish();
+                }
+        }
     }
 }

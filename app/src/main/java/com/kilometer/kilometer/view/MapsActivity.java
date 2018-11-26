@@ -1,16 +1,18 @@
 package com.kilometer.kilometer.view;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -40,16 +42,21 @@ import com.directions.route.Routing;
 import com.directions.route.RoutingListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.places.GeoDataClient;
 import com.google.android.gms.location.places.Places;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -73,14 +80,7 @@ import com.kilometer.kilometer.networking.ApiInterface;
 import com.kilometer.kilometer.util.ApplicationManager;
 import com.kilometer.kilometer.util.Constants;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -144,8 +144,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     private boolean mLocationPermissionGranted;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private PlaceAutocompleteAdapter mPlaceAutocompleteAdapter;
-    private GoogleApiClient mGoogleApiClient;
     private GeoDataClient mGeoDataClient;
+    private GoogleApiClient googleApiClient;
 
     private StateResponse stateResponse;
     private ApiInterface apiInterface;
@@ -178,10 +178,10 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         setContentView(R.layout.activity_maps);
         ButterKnife.bind(this);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Window w = getWindow();
             w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        }
+        }*/
 
         getLocationPermission();
 
@@ -193,12 +193,6 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
 
     private void init() {
         Log.d(TAG, "init:------------------------------------");
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Places.GEO_DATA_API)
-                .addApi(Places.PLACE_DETECTION_API)
-                .enableAutoManage(this, this)
-                .build();
 
         mGeoDataClient = Places.getGeoDataClient(this);
 
@@ -237,12 +231,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         Log.d(TAG, "showOnTripDetails: user is on a trip");
 
         pickUpEditText.setText(trip.getFrom());
-        pickUpEditText.setEnabled(false);
         dropOffEditText.setText(trip.getTo());
-        dropOffEditText.setEnabled(false);
-        clearPickUpImageView.setEnabled(false);
-        clearDropOffImageView.setEnabled(false);
-        myLocationImageButton.setEnabled(false);
+        disableEditTextAndMyLocation();
 
         doneButton.setText(getString(R.string.end));
         infoLayout.setVisibility(View.GONE);
@@ -356,7 +346,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     }
 
     private void getDeviceLocation() {
-        Log.d(TAG, "getDeviceLocation: getting devices current pickUpLocation...");
+        Log.d(TAG, "getDeviceLocation: getting devices current location...");
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -365,7 +355,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                 Task locationTask = mFusedLocationProviderClient.getLastLocation();
                 locationTask.addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.d(TAG, "onComplete: pickUpLocation fount");
+                        Log.d(TAG, "onComplete: location fount");
                         Location currentLocation = (Location) task.getResult();
                         Log.d(TAG, "getDeviceLocation: =============================");
                         Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
@@ -376,8 +366,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                         pickUpLocation = new com.kilometer.kilometer.model.Location(currentLocation.getLatitude(),
                                 currentLocation.getLongitude());
                     } else {
-                        Log.e(TAG, "onComplete: current pickUpLocation is null");
-                        Toast.makeText(MapsActivity.this, "Unable to get current pickUpLocation!",
+                        Log.e(TAG, "onComplete: current location is null");
+                        Toast.makeText(MapsActivity.this, "Unable to get current location!",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -409,7 +399,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     }
 
     private void getLocationPermission() {
-        Log.d(TAG, "getLocationPermission: getting pickUpLocation permissions");
+        Log.d(TAG, "getLocationPermission: getting location permissions");
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
 
@@ -488,6 +478,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
 
     private void done() {
         Log.d(TAG, "done: ");
+        ApplicationManager.hideKeyboard(this);
 
         switch (appState) {
             case Constants.NORMAL:
@@ -508,12 +499,12 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
 
         if (TextUtils.isEmpty(pickUp)) {
             Log.d(TAG, "getEstimations: select pick up");
-            Toast.makeText(this, "Please enter pick up pickUpLocation",
+            Toast.makeText(this, "Please enter pick up location",
                     Toast.LENGTH_SHORT).show();
             return;
         } else if (TextUtils.isEmpty(dropOff)) {
             Log.d(TAG, "getEstimations: select drop off");
-            Toast.makeText(this, "Please enter drop off pickUpLocation",
+            Toast.makeText(this, "Please enter drop off location",
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -545,14 +536,12 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                             Toast.LENGTH_SHORT).show();
                 } else if (estimationResponse.getStatus().equals(Constants.SUCCESS)) {
                     doneButton.setText(getString(R.string.start));
-                    pickUpEditText.setEnabled(false);
-                    clearPickUpImageView.setEnabled(false);
-                    dropOffEditText.setEnabled(false);
-                    clearDropOffImageView.setEnabled(false);
-                    myLocationImageButton.setEnabled(false);
+                    disableEditTextAndMyLocation();
                     appState = Constants.ESTIMATIONS;
                     vehicle = "bike";
                     showEstimationDetails(estimationResponse);
+                    dropOffLocation = getLocationFromAddress(dropOffEditText.getText().toString().trim());
+                    drawPath();
                 } else if (estimationResponse.getStatus().equals(Constants.ERROR)) {
                     Toast.makeText(MapsActivity.this, estimationResponse.getError(),
                             Toast.LENGTH_SHORT).show();
@@ -573,9 +562,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     }
 
     private void showEstimationDetails(EstimationResponse estimationResponse) {
-        infoLayout.setVisibility(View.VISIBLE);
-        separatorView.setVisibility(View.VISIBLE);
-        vehicleLayout.setVisibility(View.VISIBLE);
+        showInfoLayout();
 
         distanceTextView.setText("Distance: " + estimationResponse.getDistance() + " km");
         timeTextView.setText("Time: " + estimationResponse.getDuration() + " min");
@@ -607,6 +594,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
             }
 
             startTrip();
+            ApplicationManager.hideKeyboard(this);
             dialogBuilder.dismiss();
         });
 
@@ -655,8 +643,6 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                     hideInfoLayout();
                     appState = Constants.ON_TRIP;
                     trip = startTripResponse.getTrip();
-                    dropOffLocation = getLocationFromAddress(to);
-                    drawPath();
                 } else if (startTripResponse.getStatus().equals(Constants.ERROR)) {
                     Toast.makeText(MapsActivity.this, startTripResponse.getError(),
                             Toast.LENGTH_SHORT).show();
@@ -696,6 +682,12 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         vehicleLayout.setVisibility(View.GONE);
     }
 
+    private void showInfoLayout() {
+        infoLayout.setVisibility(View.VISIBLE);
+        separatorView.setVisibility(View.VISIBLE);
+        vehicleLayout.setVisibility(View.VISIBLE);
+    }
+
     private void endTrip() {
         Log.d(TAG, "endTrip: ");
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -706,7 +698,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                 Task locationTask = mFusedLocationProviderClient.getLastLocation();
                 locationTask.addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.d(TAG, "onComplete: pickUpLocation fount");
+                        Log.d(TAG, "onComplete: location fount");
                         Location currentLocation = (Location) task.getResult();
                         Log.d(TAG, "getDeviceLocation: ==============================================");
                         Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
@@ -720,8 +712,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                             Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Log.e(TAG, "onComplete: current pickUpLocation is null");
-                        Toast.makeText(MapsActivity.this, "Unable to get current pickUpLocation!",
+                        Log.e(TAG, "onComplete: current location is null");
+                        Toast.makeText(MapsActivity.this, "Unable to get current location!",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -732,7 +724,9 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     }
 
     private void callEndTripService(com.kilometer.kilometer.model.Location endLocation) {
+        Log.d(TAG, "callEndTripService: ");
         EndTripRequest endTripRequest = new EndTripRequest(deviceId, endLocation);
+        Log.e(TAG, "callEndTripService: endTripRequest: " + endTripRequest);
         Call<EndTripResponse> responseCall = apiInterface.endTrip(trip.getId(), endTripRequest);
         responseCall.enqueue(new Callback<EndTripResponse>() {
             @Override
@@ -785,6 +779,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         fareTextView.setText("Fare: " + endTripResponse.getFare());
 
         doneTripButton.setOnClickListener(view -> {
+            ApplicationManager.hideKeyboard(this);
             setViewsToInitialLook();
             appState = Constants.NORMAL;
             getDeviceLocation();
@@ -796,14 +791,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     }
 
     private void setViewsToInitialLook() {
-        doneButton.setText(getResources().getString(R.string.done));
-        pickUpEditText.setText("");
-        pickUpEditText.setEnabled(true);
-        dropOffEditText.setText("");
-        dropOffEditText.setEnabled(true);
-        clearPickUpImageView.setEnabled(true);
-        clearDropOffImageView.setEnabled(true);
-        myLocationImageButton.setEnabled(true);
+        enableEditTextAndMyLocation();
         bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
         carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
         suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
@@ -919,4 +907,38 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         if (startMarker != null) startMarker.remove();
         if (endMarker != null) endMarker.remove();
     }
+
+    @Override
+    public void onBackPressed() {
+        if (appState.equals(Constants.ESTIMATIONS)) {
+            appState = Constants.NORMAL;
+            enableEditTextAndMyLocation();
+            hideInfoLayout();
+            doneButton.setText(getString(R.string.done));
+            removePath();
+            getDeviceLocation();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private void enableEditTextAndMyLocation() {
+        doneButton.setText(getResources().getString(R.string.done));
+        pickUpEditText.setText("");
+        pickUpEditText.setEnabled(true);
+        dropOffEditText.setText("");
+        dropOffEditText.setEnabled(true);
+        clearPickUpImageView.setEnabled(true);
+        clearDropOffImageView.setEnabled(true);
+        myLocationImageButton.setEnabled(true);
+    }
+
+    private void disableEditTextAndMyLocation() {
+        pickUpEditText.setEnabled(false);
+        dropOffEditText.setEnabled(false);
+        clearPickUpImageView.setEnabled(false);
+        clearDropOffImageView.setEnabled(false);
+        myLocationImageButton.setEnabled(false);
+    }
+
 }

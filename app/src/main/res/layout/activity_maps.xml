@@ -19,6 +19,16 @@
         android:layout_marginLeft="0dp"
         android:layout_marginTop="0dp" />
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="16dp"
+        android:indeterminate="true"
+        android:visibility="invisible" />
+
     <LinearLayout
         android:id="@+id/pickUpLayout"
         android:layout_width="match_parent"
@@ -141,14 +151,6 @@
             android:text="@string/done"
             android:textAllCaps="false"
             android:textSize="24sp" />
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:indeterminate="true"
-            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/infoLayout"

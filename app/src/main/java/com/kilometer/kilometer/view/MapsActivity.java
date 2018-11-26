@@ -99,6 +99,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final float DEFAULT_ZOOM = 15.0f;
+    private static final float ON_TRIP_ZOOM = 14.0f;
     private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(
             new LatLng(-40, -168), new LatLng(71, 136));
 
@@ -332,6 +333,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
             }
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            mMap.getUiSettings().setCompassEnabled(false);
 
             init();
         }
@@ -822,7 +824,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     }
 
     private void hideProgressBar() {
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
     private com.kilometer.kilometer.model.Location getLocationFromAddress(String address) {
@@ -859,10 +861,12 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     @Override
     public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
         hideProgressBar();
-        CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(pickUpLocation.getLat(),
-                pickUpLocation.getLng()));
+        /*CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(pickUpLocation.getLat(),
+                pickUpLocation.getLng()));*/
 
-        mMap.moveCamera(center);
+        LatLng source = new LatLng(pickUpLocation.getLat(),
+                pickUpLocation.getLng());
+        moveCamera(source, ON_TRIP_ZOOM);
 
         if (polylines.size() > 0) {
             for (Polyline poly : polylines) {

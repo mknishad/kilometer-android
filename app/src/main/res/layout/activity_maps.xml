@@ -187,7 +187,7 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/fareTextView"
+                android:id="@+id/estimatedFareTextView"
                 tools:text="Fare: $4.43"
                 android:textSize="20sp"
                 android:layout_gravity="center_vertical"

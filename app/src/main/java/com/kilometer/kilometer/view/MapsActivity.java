@@ -110,8 +110,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     TextView distanceTextView;
     @BindView(R.id.timeTextView)
     TextView timeTextView;
-    @BindView(R.id.fareTextView)
-    TextView fareTextView;
+    @BindView(R.id.estimatedFareTextView)
+    TextView estimatedFareTextView;
     @BindView(R.id.infoLayout)
     LinearLayout infoLayout;
     @BindView(R.id.separatorView)
@@ -233,27 +233,28 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         drawPath();
     }
 
-    private void setVehicle(String vehicle) {
-        switch (vehicle) {
+    private void setVehicle(String v) {
+        switch (v) {
             case "bike":
                 bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
                 carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
                 suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
+                estimatedFareTextView.setText("Fare: " +
+                        estimationResponse.getEstimations().get(0).getFare() + " Tk");
                 vehicle = "bike";
                 break;
             case "car":
                 bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
                 carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
                 suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(1).getFare() + " BDT");
+                estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations().get(1).getFare() + " Tk");
                 vehicle = "car";
                 break;
             case "suv":
                 bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
                 carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
                 suvImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(2).getFare() + " BDT");
+                estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations().get(2).getFare() + " Tk");
                 vehicle = "suv";
                 break;
         }
@@ -553,7 +554,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
 
         distanceTextView.setText("Distance: " + estimationResponse.getDistance() + " km");
         timeTextView.setText("Time: " + estimationResponse.getDuration() + " min");
-        fareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " BDT");
+        estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " Tk");
         bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
     }
 
@@ -713,7 +714,11 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     private void callEndTripService(com.kilometer.kilometer.model.Location endLocation) {
         Log.d(TAG, "callEndTripService: ");
         EndTripRequest endTripRequest = new EndTripRequest(deviceId, endLocation);
-        Log.e(TAG, "callEndTripService: endTripRequest: " + endTripRequest);
+
+        Log.d(TAG, "callEndTripService: ====================================================");
+        Log.d(TAG, "callEndTripService: endTripRequest: " + endTripRequest);
+        Log.d(TAG, "callEndTripService: ====================================================");
+
         Call<EndTripResponse> responseCall = apiInterface.endTrip(trip.getId(), endTripRequest);
         responseCall.enqueue(new Callback<EndTripResponse>() {
             @Override
@@ -722,6 +727,10 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                 hideProgressBar();
 
                 endTripResponse = response.body();
+
+                Log.d(TAG, "onResponse: ====================================================");
+                Log.d(TAG, "onResponse: endTripResponse: " + endTripResponse);
+                Log.d(TAG, "onResponse: ====================================================");
 
                 if (endTripResponse == null) {
                     Log.e(TAG, "onResponse: endTripResponse == null");

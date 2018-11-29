@@ -79,7 +79,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MapsActivity extends FragmentActivity implements RoutingListener, OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+public class MapsActivity extends FragmentActivity implements RoutingListener, OnMapReadyCallback,
+        GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "MapsActivity";
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -167,7 +168,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
 
         /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Window w = getWindow();
-            w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+            w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         }*/
 
         getLocationPermission();
@@ -237,24 +239,33 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         switch (v) {
             case "bike":
                 bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                estimatedFareTextView.setText("Fare: " +
-                        estimationResponse.getEstimations().get(0).getFare() + " Tk");
+                carImageView.setBackgroundColor(getResources().getColor(
+                        android.R.color.darker_gray));
+                suvImageView.setBackgroundColor(getResources().getColor(
+                        android.R.color.darker_gray));
+                estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations()
+                        .get(0).getFare() + " Tk");
                 vehicle = "bike";
                 break;
             case "car":
-                bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                carImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                suvImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations().get(1).getFare() + " Tk");
+                bikeImageView.setBackgroundColor(getResources().getColor(
+                        android.R.color.darker_gray));
+                carImageView.setBackgroundColor(getResources().getColor(
+                        android.R.color.white));
+                suvImageView.setBackgroundColor(getResources().getColor(
+                        android.R.color.darker_gray));
+                estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations()
+                        .get(1).getFare() + " Tk");
                 vehicle = "car";
                 break;
             case "suv":
-                bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                carImageView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                bikeImageView.setBackgroundColor(getResources().getColor(
+                        android.R.color.darker_gray));
+                carImageView.setBackgroundColor(getResources().getColor(
+                        android.R.color.darker_gray));
                 suvImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
-                estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations().get(2).getFare() + " Tk");
+                estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations()
+                        .get(2).getFare() + " Tk");
                 vehicle = "suv";
                 break;
         }
@@ -306,7 +317,11 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         if (mLocationPermissionGranted) {
             getDeviceLocation();
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED) {
                 return;
             }
             mMap.setMyLocationEnabled(true);
@@ -346,13 +361,16 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                         Log.d(TAG, "onComplete: location fount");
                         Location currentLocation = (Location) task.getResult();
                         Log.d(TAG, "getDeviceLocation: =============================");
-                        Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
+                        Log.d(TAG, "getDeviceLocation: currentLocation: " +
+                                currentLocation.toString());
                         Log.d(TAG, "getDeviceLocation: =============================");
-                        setCurrentAddress(currentLocation.getLatitude(), currentLocation.getLongitude());
-                        moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
-                                DEFAULT_ZOOM);
-                        pickUpLocation = new com.kilometer.kilometer.model.Location(currentLocation.getLatitude(),
+                        setCurrentAddress(currentLocation.getLatitude(),
                                 currentLocation.getLongitude());
+                        moveCamera(new LatLng(currentLocation.getLatitude(),
+                                currentLocation.getLongitude()),
+                                DEFAULT_ZOOM);
+                        pickUpLocation = new com.kilometer.kilometer.model.Location(
+                                currentLocation.getLatitude(), currentLocation.getLongitude());
                     } else {
                         Log.e(TAG, "onComplete: current location is null");
                         Toast.makeText(MapsActivity.this, "Unable to get current location!",
@@ -410,7 +428,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         mLocationPermissionGranted = false;
 
         switch (requestCode) {
@@ -429,7 +448,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         }
     }
 
-    @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton, R.id.bikeImageView, R.id.carImageView, R.id.suvImageView, R.id.myLocationImageButton})
+    @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton,
+            R.id.bikeImageView, R.id.carImageView, R.id.suvImageView, R.id.myLocationImageButton})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.clearPickUpImageView:
@@ -506,10 +526,12 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         showProgressBar();
         EstimationRequest estimationRequest = new EstimationRequest(pickUp, dropOff);
 
-        Call<EstimationResponse> estimationResponseCall = apiInterface.getEstimations(estimationRequest);
+        Call<EstimationResponse> estimationResponseCall = apiInterface.
+                getEstimations(estimationRequest);
         estimationResponseCall.enqueue(new Callback<EstimationResponse>() {
             @Override
-            public void onResponse(Call<EstimationResponse> call, Response<EstimationResponse> response) {
+            public void onResponse(Call<EstimationResponse> call,
+                                   Response<EstimationResponse> response) {
                 hideProgressBar();
                 Log.d(TAG, "onResponse: ");
                 estimationResponse = response.body();
@@ -528,7 +550,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                     appState = Constants.ESTIMATIONS;
                     vehicle = "bike";
                     showEstimationDetails(estimationResponse);
-                    dropOffLocation = getLocationFromAddress(dropOffEditText.getText().toString().trim());
+                    dropOffLocation = getLocationFromAddress(dropOffEditText.getText()
+                            .toString().trim());
                     drawPath();
                 } else if (estimationResponse.getStatus().equals(Constants.ERROR)) {
                     Toast.makeText(MapsActivity.this, estimationResponse.getError(),
@@ -554,7 +577,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
 
         distanceTextView.setText("Distance: " + estimationResponse.getDistance() + " km");
         timeTextView.setText("Time: " + estimationResponse.getDuration() + " min");
-        estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations().get(0).getFare() + " Tk");
+        estimatedFareTextView.setText("Fare: " + estimationResponse.getEstimations()
+                .get(0).getFare() + " Tk");
         bikeImageView.setBackgroundColor(getResources().getColor(android.R.color.white));
     }
 
@@ -574,10 +598,12 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
             ApplicationManager.hideKeyboard(this);
 
             if (TextUtils.isEmpty(name)) {
-                Toast.makeText(this, "Please enter passenger name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Please enter passenger name",
+                        Toast.LENGTH_SHORT).show();
                 return;
             } else if (TextUtils.isEmpty(phone)) {
-                Toast.makeText(this, "Please enter passenger phone number", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Please enter passenger phone number",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -614,7 +640,8 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         Call<StartTripResponse> responseCall = apiInterface.startTrip(startTripRequest);
         responseCall.enqueue(new Callback<StartTripResponse>() {
             @Override
-            public void onResponse(Call<StartTripResponse> call, Response<StartTripResponse> response) {
+            public void onResponse(Call<StartTripResponse> call,
+                                   Response<StartTripResponse> response) {
                 hideProgressBar();
                 startTripResponse = response.body();
 
@@ -688,20 +715,25 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
                     if (task.isSuccessful()) {
                         Log.d(TAG, "onComplete: location found");
                         Location currentLocation = (Location) task.getResult();
-                        Log.d(TAG, "getDeviceLocation: ==============================================");
-                        Log.d(TAG, "getDeviceLocation: currentLocation: " + currentLocation.toString());
-                        Log.d(TAG, "getDeviceLocation: ==============================================");
-                        com.kilometer.kilometer.model.Location endLocation = new com.kilometer.kilometer.model.Location(currentLocation.getLatitude(),
-                                currentLocation.getLongitude());
+                        Log.d(TAG, "getDeviceLocation: =====================================");
+                        Log.d(TAG, "getDeviceLocation: currentLocation: " +
+                                currentLocation.toString());
+                        Log.d(TAG, "getDeviceLocation: =====================================");
+                        com.kilometer.kilometer.model.Location endLocation =
+                                new com.kilometer.kilometer.model.Location(
+                                        currentLocation.getLatitude(),
+                                        currentLocation.getLongitude());
                         if (ApplicationManager.hasInternetConnection(this)) {
                             callEndTripService(endLocation);
                         } else {
                             Log.e(TAG, "endTrip: No internet connection!");
-                            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "No internet connection!",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     } else {
                         Log.e(TAG, "onComplete: current location is null");
-                        Toast.makeText(MapsActivity.this, "Unable to get current location!",
+                        Toast.makeText(MapsActivity.this,
+                                "Unable to get current location!",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -814,9 +846,11 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     private com.kilometer.kilometer.model.Location getLocationFromAddress(String address) {
         Log.d(TAG, "getLocationFromAddress: ");
         Geocoder coder = new Geocoder(this);
-        com.kilometer.kilometer.model.Location location = new com.kilometer.kilometer.model.Location();
+        com.kilometer.kilometer.model.Location location =
+                new com.kilometer.kilometer.model.Location();
         try {
-            ArrayList<Address> addresses = (ArrayList<Address>) coder.getFromLocationName(address, 5);
+            ArrayList<Address> addresses = (ArrayList<Address>) coder.getFromLocationName(
+                    address, 5);
             Address foundAddress = addresses.get(0);
             location = new com.kilometer.kilometer.model.Location(foundAddress.getLatitude(),
                     foundAddress.getLongitude());
@@ -879,13 +913,15 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         // Start marker
         MarkerOptions options = new MarkerOptions();
         options.position(new LatLng(pickUpLocation.getLat(), pickUpLocation.getLng()));
-        options.icon(ApplicationManager.bitmapDescriptorFromVector(this, R.drawable.ic_pick_up));
+        options.icon(ApplicationManager.bitmapDescriptorFromVector(this,
+                R.drawable.ic_pick_up));
         startMarker = mMap.addMarker(options);
 
         // End marker
         options = new MarkerOptions();
         options.position(new LatLng(dropOffLocation.getLat(), dropOffLocation.getLng()));
-        options.icon(ApplicationManager.bitmapDescriptorFromVector(this, R.drawable.ic_drop_off));
+        options.icon(ApplicationManager.bitmapDescriptorFromVector(this,
+                R.drawable.ic_drop_off));
         endMarker = mMap.addMarker(options);
     }
 

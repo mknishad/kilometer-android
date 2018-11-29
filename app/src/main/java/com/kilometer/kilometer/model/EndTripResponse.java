@@ -22,7 +22,8 @@ public class EndTripResponse implements Serializable {
     public EndTripResponse() {
     }
 
-    public EndTripResponse(String status, String distance, String duration, String fare, String vehicle, String error) {
+    public EndTripResponse(String status, String distance, String duration, String fare,
+                           String vehicle, String error) {
         this.status = status;
         this.distance = distance;
         this.duration = duration;

@@ -76,17 +76,21 @@ public class SplashScreenActivity extends AppCompatActivity {
     private boolean isPlayServicesOk() {
         Log.d(TAG, "isPlayServicesOk: checking google play services version");
 
-        int available = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(SplashScreenActivity.this);
+        int available = GoogleApiAvailability.getInstance()
+                .isGooglePlayServicesAvailable(SplashScreenActivity.this);
         if (available == ConnectionResult.SUCCESS) {
             Log.d(TAG, "isPlayServicesOk: google play services is ok");
             return true;
         } else if (GoogleApiAvailability.getInstance().isUserResolvableError(available)) {
             Log.d(TAG, "isPlayServicesOk: and error occurred but we can fix it");
-            Dialog dialog = GoogleApiAvailability.getInstance().getErrorDialog(SplashScreenActivity.this, available, ERROR_DIALOG_REQUEST);
+            Dialog dialog = GoogleApiAvailability.getInstance()
+                    .getErrorDialog(SplashScreenActivity.this,
+                            available, ERROR_DIALOG_REQUEST);
             dialog.show();
         } else {
             Log.e(TAG, "isPlayServicesOk: google play services is unavailable!");
-            Toast.makeText(SplashScreenActivity.this, "You can't make map requests!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(SplashScreenActivity.this, "You can't make map requests!",
+                    Toast.LENGTH_SHORT).show();
         }
         return false;
     }
@@ -110,21 +114,18 @@ public class SplashScreenActivity extends AppCompatActivity {
             init();
         });
 
-        task.addOnFailureListener(this, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                if (e instanceof ResolvableApiException) {
-                    // Location settings are not satisfied, but this can be fixed
-                    // by showing the user a dialog.
-                    try {
-                        // Show the dialog by calling startResolutionForResult(),
-                        // and check the result in onActivityResult().
-                        ResolvableApiException resolvable = (ResolvableApiException) e;
-                        resolvable.startResolutionForResult(SplashScreenActivity.this,
-                                REQUEST_CHECK_SETTINGS);
-                    } catch (IntentSender.SendIntentException sendEx) {
-                        // Ignore the error.
-                    }
+        task.addOnFailureListener(this, e -> {
+            if (e instanceof ResolvableApiException) {
+                // Location settings are not satisfied, but this can be fixed
+                // by showing the user a dialog.
+                try {
+                    // Show the dialog by calling startResolutionForResult(),
+                    // and check the result in onActivityResult().
+                    ResolvableApiException resolvable = (ResolvableApiException) e;
+                    resolvable.startResolutionForResult(SplashScreenActivity.this,
+                            REQUEST_CHECK_SETTINGS);
+                } catch (IntentSender.SendIntentException sendEx) {
+                    // Ignore the error.
                 }
             }
         });
@@ -155,7 +156,8 @@ public class SplashScreenActivity extends AppCompatActivity {
 
                     if (stateResponse == null) {
                         Log.e(TAG, "onResponse: stateResponse == null");
-                        Toast.makeText(SplashScreenActivity.this, "Internal server error!",
+                        Toast.makeText(SplashScreenActivity.this,
+                                "Internal server error!",
                                 Toast.LENGTH_SHORT).show();
                     }
 
@@ -165,7 +167,8 @@ public class SplashScreenActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(Call<StateResponse> call, Throwable t) {
                     Log.e(TAG, "onFailure: " + t.getMessage(), t);
-                    Toast.makeText(SplashScreenActivity.this, "Internal server error!",
+                    Toast.makeText(SplashScreenActivity.this,
+                            "Internal server error!",
                             Toast.LENGTH_SHORT).show();
                     openMap();
                 }

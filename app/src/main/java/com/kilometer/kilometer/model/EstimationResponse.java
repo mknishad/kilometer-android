@@ -25,8 +25,8 @@ public class EstimationResponse implements Serializable {
     public EstimationResponse() {
     }
 
-    public EstimationResponse(String status, ArrayList<String> from, ArrayList<String> to, String distance,
-                              String duration, ArrayList<Estimation> estimations) {
+    public EstimationResponse(String status, ArrayList<String> from, ArrayList<String> to,
+                              String distance, String duration, ArrayList<Estimation> estimations) {
         this.status = status;
         this.from = from;
         this.to = to;

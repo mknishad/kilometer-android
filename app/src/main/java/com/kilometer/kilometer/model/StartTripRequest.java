@@ -21,7 +21,8 @@ public class StartTripRequest implements Serializable {
     public StartTripRequest() {
     }
 
-    public StartTripRequest(String deviceId, String from, String to, String vehicle, Passenger passenger, Location location) {
+    public StartTripRequest(String deviceId, String from, String to, String vehicle,
+                            Passenger passenger, Location location) {
         this.deviceId = deviceId;
         this.from = from;
         this.to = to;

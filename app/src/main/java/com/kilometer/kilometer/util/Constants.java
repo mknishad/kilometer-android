@@ -10,4 +10,5 @@ public class Constants {
     public static final String ON_TRIP = "on-trip";
     public static final String SUCCESS = "success";
     public static final String ERROR = "error";
+    public static final String LOCATION_PERMISSION = "location-permission";
 }

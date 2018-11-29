@@ -1,15 +1,20 @@
 package com.kilometer.kilometer.view;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -22,12 +27,14 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.kilometer.kilometer.R;
 import com.kilometer.kilometer.model.StateResponse;
 import com.kilometer.kilometer.networking.ApiClient;
 import com.kilometer.kilometer.networking.ApiInterface;
 import com.kilometer.kilometer.util.ApplicationManager;
 import com.kilometer.kilometer.util.Constants;
 
+import butterknife.OnClick;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -36,9 +43,13 @@ import retrofit2.Response;
 public class SplashScreenActivity extends AppCompatActivity {
 
     private static final String TAG = "SplashScreenActivity";
+    private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
+    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int ERROR_DIALOG_REQUEST = 1000;
-    private static final int REQUEST_CHECK_SETTINGS = 1001;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final int REQUEST_CHECK_SETTINGS = 1002;
 
+    private boolean mLocationPermissionGranted;
     private String androidId;
     private ApiInterface apiInterface;
     private StateResponse stateResponse;
@@ -52,9 +63,57 @@ public class SplashScreenActivity extends AppCompatActivity {
         checkServerStatus();
 
         if (isPlayServicesOk()) {
-            createLocationRequest();
+            //createLocationRequest();
+            getLocationPermission();
         } else {
             finish();
+        }
+    }
+
+    private void getLocationPermission() {
+        Log.d(TAG, "getLocationPermission: getting location permissions");
+        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION};
+
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), COARSE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED) {
+                mLocationPermissionGranted = true;
+                //initMap();
+                createLocationRequest();
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        permissions,
+                        LOCATION_PERMISSION_REQUEST_CODE);
+            }
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    permissions,
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        mLocationPermissionGranted = false;
+
+        switch (requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE:
+                if (grantResults.length > 0) {
+                    for (int grantResult : grantResults) {
+                        if (grantResult != PackageManager.PERMISSION_GRANTED) {
+                            Log.e(TAG, "onRequestPermissionsResult: permission failed!");
+                            finish();
+                            return;
+                        }
+                    }
+                    Log.d(TAG, "onRequestPermissionsResult: permission granted!");
+                    mLocationPermissionGranted = true;
+                    //initMap();
+                    createLocationRequest();
+                }
         }
     }
 
@@ -111,6 +170,7 @@ public class SplashScreenActivity extends AppCompatActivity {
             // All location settings are satisfied. The client can initialize
             // location requests here.
             // ...
+            //init();
             init();
         });
 
@@ -181,6 +241,7 @@ public class SplashScreenActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
         intent.putExtra(Constants.STATE_RESPONSE, stateResponse);
         intent.putExtra(Constants.DEVICE_ID, androidId);
+        intent.putExtra(Constants.LOCATION_PERMISSION, mLocationPermissionGranted);
         startActivity(intent);
         finish();
     }

@@ -83,9 +83,6 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "MapsActivity";
-    private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
-    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final float DEFAULT_ZOOM = 15.0f;
     private static final float ON_TRIP_ZOOM = 14.0f;
     private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(
@@ -133,7 +130,6 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private PlaceAutocompleteAdapter mPlaceAutocompleteAdapter;
     private GeoDataClient mGeoDataClient;
-    private GoogleApiClient googleApiClient;
 
     private StateResponse stateResponse;
     private ApiInterface apiInterface;
@@ -172,15 +168,19 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         }*/
 
-        getLocationPermission();
+        //getLocationPermission();
 
         stateResponse = (StateResponse) getIntent().getSerializableExtra(Constants.STATE_RESPONSE);
         trip = stateResponse.getTrip();
         deviceId = getIntent().getStringExtra(Constants.DEVICE_ID);
         apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
+        mLocationPermissionGranted = getIntent().getBooleanExtra(Constants.LOCATION_PERMISSION,
+                false);
+
+        initMap();
     }
 
-    private void init() {
+    private void initPlacesService() {
         Log.d(TAG, "init:------------------------------------");
 
         mGeoDataClient = Places.getGeoDataClient(this);
@@ -271,26 +271,6 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         }
     }
 
-    private void geoLocate() {
-        Log.d(TAG, "geoLocate: geolocating...");
-
-        String searchString = pickUpEditText.getText().toString();
-        Geocoder geocoder = new Geocoder(MapsActivity.this);
-        List<Address> addressList = new ArrayList<>();
-
-        try {
-            addressList = geocoder.getFromLocationName(searchString, 1);
-        } catch (IOException e) {
-            Log.e(TAG, "geoLocate: IOException: " + e.getMessage(), e);
-        }
-
-        if (addressList.size() > 0) {
-            Address address = addressList.get(0);
-
-            Log.d(TAG, "geoLocate: found a pickUpLocation: " + address.toString());
-        }
-    }
-
     private void initMap() {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -328,7 +308,7 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
             mMap.getUiSettings().setCompassEnabled(false);
 
-            init();
+            initPlacesService();
         }
     }
 
@@ -402,50 +382,6 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         Log.d(TAG, "moveCamera: moving the camera to lat: " + latLng.latitude + ", lng: "
                 + latLng.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-    }
-
-    private void getLocationPermission() {
-        Log.d(TAG, "getLocationPermission: getting location permissions");
-        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION};
-
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED) {
-            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), COARSE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED) {
-                mLocationPermissionGranted = true;
-                initMap();
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        permissions,
-                        LOCATION_PERMISSION_REQUEST_CODE);
-            }
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    permissions,
-                    LOCATION_PERMISSION_REQUEST_CODE);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        mLocationPermissionGranted = false;
-
-        switch (requestCode) {
-            case LOCATION_PERMISSION_REQUEST_CODE:
-                if (grantResults.length > 0) {
-                    for (int grantResult : grantResults) {
-                        if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                            Log.e(TAG, "onRequestPermissionsResult: permission failed!");
-                            return;
-                        }
-                    }
-                    Log.d(TAG, "onRequestPermissionsResult: permission granted!");
-                    mLocationPermissionGranted = true;
-                    initMap();
-                }
-        }
     }
 
     @OnClick({R.id.clearPickUpImageView, R.id.clearDropOffImageView, R.id.doneButton,
@@ -972,5 +908,4 @@ public class MapsActivity extends FragmentActivity implements RoutingListener, O
         clearDropOffImageView.setEnabled(false);
         myLocationImageButton.setEnabled(false);
     }
-
 }

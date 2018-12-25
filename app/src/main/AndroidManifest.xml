@@ -37,7 +37,7 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".view.SplashScreenActivity"
+            android:name=".activity.SplashScreenActivity"
             android:screenOrientation="portrait"
             android:theme="@style/SplashTheme">
             <intent-filter>
@@ -49,7 +49,7 @@
         </activity>
 
         <activity
-            android:name=".view.MapsActivity"
+            android:name=".activity.MapsActivity"
             android:screenOrientation="portrait"
             android:label="@string/title_activity_maps"
             android:windowSoftInputMode="adjustResize" />

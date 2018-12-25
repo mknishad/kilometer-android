@@ -1,4 +1,4 @@
-package com.kilometer.kilometer.view;
+package com.kilometer.kilometer.activity;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -11,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -66,6 +65,7 @@ import com.kilometer.kilometer.networking.ApiClient;
 import com.kilometer.kilometer.networking.ApiInterface;
 import com.kilometer.kilometer.util.ApplicationManager;
 import com.kilometer.kilometer.util.Constants;
+import com.kilometer.kilometer.adapter.PlaceAutocompleteAdapter;
 
 import java.io.IOException;
 import java.util.ArrayList;

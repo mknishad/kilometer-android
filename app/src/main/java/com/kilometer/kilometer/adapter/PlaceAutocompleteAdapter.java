@@ -1,4 +1,4 @@
-package com.kilometer.kilometer.view;
+package com.kilometer.kilometer.adapter;
 
 import android.content.Context;
 import android.graphics.Typeface;

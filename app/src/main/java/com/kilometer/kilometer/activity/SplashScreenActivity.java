@@ -1,4 +1,4 @@
-package com.kilometer.kilometer.view;
+package com.kilometer.kilometer.activity;
 
 import android.Manifest;
 import android.app.Activity;
@@ -14,7 +14,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -25,16 +24,13 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
-import com.kilometer.kilometer.R;
 import com.kilometer.kilometer.model.StateResponse;
 import com.kilometer.kilometer.networking.ApiClient;
 import com.kilometer.kilometer.networking.ApiInterface;
 import com.kilometer.kilometer.util.ApplicationManager;
 import com.kilometer.kilometer.util.Constants;
 
-import butterknife.OnClick;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
